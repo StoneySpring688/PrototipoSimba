@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sImbA - Asistente Inteligente de Recomendación Lectora</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Configuramos Tailwind para que use nuestras variables CSS */
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--primary-color)',
+                        secondary: 'var(--secondary-color)',
+                        accent: 'var(--accent-blue)',
+                        bgLight: 'var(--bg-light)',
+                        textDark: 'var(--text-dark)',
+                        error: 'var(--error-red)',
+                        success: 'var(--success-green)',
+                    }
+                }
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Header Principal -->
+    <header class="bg-primary p-4 shadow-md text-white flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <span class="text-3xl">🦁</span>
+            <h1 class="text-2xl font-bold italic">sImbA</h1>
+        </div>
+        <div id="user-info" class="hidden flex items-center space-x-4">
+            <span id="role-badge" class="bg-white text-primary px-3 py-1 rounded-full text-sm font-bold uppercase"></span>
+            <button onclick="logout()" class="hover:underline text-sm font-medium">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+
+        <!-- VISTA: LOGIN (NUEVA) -->
+        <section id="login-view" class="max-w-md mx-auto mt-20 text-center">
+            <div class="card p-10 space-y-6">
+                <div class="flex flex-col items-center mb-6">
+                    <span class="text-5xl mb-2">🦁</span>
+                    <h2 class="text-3xl font-bold text-primary">Iniciar Sesión</h2>
+                    <p class="text-text-muted text-sm mt-2">Accede a tu cuenta de sImbA</p>
+                </div>
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Usuario / Email</label>
+                        <input type="text" placeholder="ejemplo@cole.es" class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Contraseña</label>
+                        <input type="password" placeholder="••••••••" class="w-full border-2 border-gray-100 rounded-xl px-4 py-2 focus:border-primary outline-none">
+                    </div>
+                    <button onclick="showRoleSelection()" class="w-full bg-primary text-white p-3 rounded-xl font-bold shadow-lg hover:bg-primary-hover transition-colors mt-4">
+                        Entrar
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 mt-6">¿Olvidaste tu contraseña? Contacta con tu centro.</p>
+            </div>
+        </section>
+
+        <!-- VISTA: SELECCIÓN DE ROL (ANTERIOR LOGIN) -->
+        <section id="role-view" class="hidden max-w-md mx-auto mt-20 text-center">
+            <div class="card p-10 space-y-8">
+                <h2 class="text-3xl font-bold text-primary">¡Hola de nuevo!</h2>
+                <p class="text-textDark">Selecciona el perfil con el que quieres entrar hoy:</p>
+                <p class="text-xs text-gray-500 italic">Esta selección se permite para la prueba de prototipo</p>
+                <div class="grid grid-cols-1 gap-4">
+                    <button onclick="login('alumno')" class="bg-primary text-white p-6 rounded-2xl text-xl shadow-lg hover:bg-primary-hover flex items-center justify-center space-x-3">
+                        <span>🎒</span> <span>Alumno</span>
+                    </button>
+                    <button onclick="login('profesor')" class="bg-accent text-white p-6 rounded-2xl text-xl shadow-lg hover:opacity-90 flex items-center justify-center space-x-3">
+                        <span>👩‍🏫</span> <span>Profesor</span>
+                    </button>
+                    <button onclick="login('familiar')" class="bg-secondary text-textDark p-6 rounded-2xl text-xl shadow-lg hover:opacity-90 flex items-center justify-center space-x-3">
+                        <span>🏠</span> <span>Familiar</span>
+                    </button>
+                </div>
+                <button onclick="backToLogin()" class="text-sm text-gray-500 hover:underline">← Volver al login</button>
+            </div>
+        </section>
+
+        <!-- VISTA: ALUMNO -->
+        <section id="alumno-view" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">¡Bienvenido, Simba! 👋</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Chat con el Asistente -->
+                <div class="md:col-span-2 card p-4 flex flex-col h-[500px]">
+                    <h3 class="font-bold border-b pb-2 mb-4">Chat con sImbA</h3>
+                    <div id="alumno-chat-messages" class="flex-1 overflow-y-auto space-y-4 p-2">
+                        <div class="chat-bubble-ai p-3 max-w-[80%]">
+                            ¡Hola! Soy sImbA, tu asistente lector. ¿De qué te gustaría leer hoy? Puedo recomendarte algo de misterio, aventuras o ciencia ficción.
+                        </div>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                        <input type="text" id="alumno-chat-input" placeholder="Escribe aquí..." class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-primary outline-none">
+                        <button onclick="sendMessage()" class="bg-primary text-white p-2 rounded-xl">Enviar</button>
+                        <button onclick="simulateVoice()" class="bg-accent text-white p-2 rounded-xl" title="Usar Voz">🎤</button>
+                    </div>
+                </div>
+
+                <!-- Preferencias y Filtros Avanzados -->
+                <div class="space-y-6">
+                    <div class="card p-6">
+                        <h3 class="font-bold mb-4">Mis Preferencias 🪄</h3>
+                        <div class="space-y-4 text-left">
+                            
+                            <!-- Etiquetas -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Etiquetas</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="alumno-select-etiquetas" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Piratas">Piratas</option>
+                                        <option value="Aventuras">Aventuras</option>
+                                        <option value="Acción">Acción</option>
+                                        <option value="Comic">Comic</option>
+                                        <option value="Animales">Animales</option>
+                                        <option value="Misterio">Misterio</option>
+                                        <option value="Fantasía">Fantasía</option>
+                                    </select>
+                                    <button onclick="addPrefItem('etiquetas')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="alumno-list-etiquetas" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <!-- Estructura de personajes -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-normal">Estructura de Personajes</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="alumno-select-estructura" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Héroe solitario">Héroe solitario</option>
+                                        <option value="Grupo de amigos">Grupo de amigos</option>
+                                        <option value="Animales antropomorfos">Animales antropomorfos</option>
+                                        <option value="Mentores mágicos">Mentores mágicos</option>
+                                    </select>
+                                    <button onclick="addPrefItem('estructura')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="alumno-list-estructura" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <!-- Valores -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valores</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="alumno-select-valores" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Amistad">Amistad</option>
+                                        <option value="Valentía">Valentía</option>
+                                        <option value="Respeto">Respeto</option>
+                                        <option value="Sinceridad">Sinceridad</option>
+                                        <option value="Esfuerzo">Esfuerzo</option>
+                                    </select>
+                                    <button onclick="addPrefItem('valores')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="alumno-list-valores" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <button type="button" onclick="updatePreferences()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-md hover:bg-primary-hover transition-colors mt-4 uppercase text-xs">
+                                Actualizar Recomendaciones
+                            </button>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- Catálogo de Recomendaciones -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold">Libros sugeridos para ti</h3>
+                <div id="alumno-book-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    <!-- Los libros se cargarán aquí -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA: PROFESOR -->
+        <section id="profesor-view" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold text-accent">Panel del Docente 👩‍🏫</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Lista de Alumnos -->
+                <div class="card p-4">
+                    <h3 class="font-bold border-b pb-2 mb-4">Mi Clase</h3>
+                    <ul id="students-list" class="space-y-2">
+                        <!-- Estudiantes cargados por JS -->
+                    </ul>
+                </div>
+
+                <!-- Gestión de Filtros -->
+                <div class="md:col-span-3 space-y-6">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-4">Configurar Filtros de Aula</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 border-2 border-dashed border-gray-200 rounded-xl">
+                                <h4 class="font-bold text-primary mb-2">+ Nueva Recomendación</h4>
+                                <p class="text-xs mb-4">Fuerza lecturas alineadas al currículum.</p>
+                                <input type="text" id="prof-rec-input" placeholder="Tema/Etiqueta..." class="w-full border p-2 rounded mb-2">
+                                <button onclick="addGlobalFilter('recomendacion')" class="bg-primary text-white w-full py-2 rounded-lg">Aplicar a Clase</button>
+                            </div>
+                            <div class="p-4 border-2 border-dashed border-gray-200 rounded-xl">
+                                <h4 class="font-bold text-error mb-2">+ Nueva Restricción</h4>
+                                <p class="text-xs mb-4">Evita contenido no apto.</p>
+                                <input type="text" id="prof-res-input" placeholder="Tema/Etiqueta a bloquear..." class="w-full border p-2 rounded mb-2">
+                                <button onclick="addGlobalFilter('restriccion')" class="bg-primary text-white w-full py-2 rounded-lg">Aplicar a Clase</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-6">
+                        <h3 class="font-bold mb-4">Filtros Activos</h3>
+                        <div id="active-filters-prof" class="flex flex-wrap gap-2">
+                            <!-- Filtros cargados por JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parte de recomendador -->
+             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Chat con el Asistente -->
+                <div class="md:col-span-2 card p-4 flex flex-col h-[500px]">
+                    <h3 class="font-bold border-b pb-2 mb-4">Chat con sImbA</h3>
+                    <div id="profesor-chat-messages" class="flex-1 overflow-y-auto space-y-4 p-2">
+                        <div class="chat-bubble-ai p-3 max-w-[80%]">
+                            ¡Hola! Soy sImbA. Puedo sugerirte lecturas para tus alumnos basadas en su progreso o ayudarte a configurar filtros. ¿Qué necesitas saber?
+                        </div>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                        <input type="text" id="profesor-chat-input" placeholder="Escribe aquí..." class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-primary outline-none">
+                        <button onclick="sendMessage()" class="bg-primary text-white p-2 rounded-xl">Enviar</button>
+                        <button onclick="simulateVoice()" class="bg-accent text-white p-2 rounded-xl" title="Usar Voz">🎤</button>
+                    </div>
+                </div>
+
+                <!-- Preferencias y Filtros Avanzados -->
+                <div class="space-y-6">
+                    <div class="card p-6">
+                        <h3 class="font-bold mb-4">Mis Preferencias 🪄</h3>
+                        <div class="space-y-4 text-left">
+                            
+                            <!-- Etiquetas -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Etiquetas</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="profesor-select-etiquetas" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Piratas">Piratas</option>
+                                        <option value="Aventuras">Aventuras</option>
+                                        <option value="Acción">Acción</option>
+                                        <option value="Comic">Comic</option>
+                                        <option value="Animales">Animales</option>
+                                        <option value="Misterio">Misterio</option>
+                                        <option value="Fantasía">Fantasía</option>
+                                    </select>
+                                    <button onclick="addPrefItem('etiquetas')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="profesor-list-etiquetas" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <!-- Estructura de personajes -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-normal">Estructura de Personajes</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="profesor-select-estructura" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Héroe solitario">Héroe solitario</option>
+                                        <option value="Grupo de amigos">Grupo de amigos</option>
+                                        <option value="Animales antropomorfos">Animales antropomorfos</option>
+                                        <option value="Mentores mágicos">Mentores mágicos</option>
+                                    </select>
+                                    <button onclick="addPrefItem('estructura')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="profesor-list-estructura" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <!-- Valores -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valores</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="profesor-select-valores" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Amistad">Amistad</option>
+                                        <option value="Valentía">Valentía</option>
+                                        <option value="Respeto">Respeto</option>
+                                        <option value="Sinceridad">Sinceridad</option>
+                                        <option value="Esfuerzo">Esfuerzo</option>
+                                    </select>
+                                    <button onclick="addPrefItem('valores')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="profesor-list-valores" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <button type="button" onclick="updatePreferences()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-md hover:bg-primary-hover transition-colors mt-4 uppercase text-xs">
+                                Actualizar Recomendaciones
+                            </button>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- Catálogo de Recomendaciones -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold">Libros sugeridos para tu alumno</h3>
+                <div id="profesor-book-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    <!-- Los libros se cargarán aquí -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA: FAMILIAR -->
+        <section id="familiar-view" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold text-secondary text-shadow">Supervisión Familiar 🏠</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Historial del Alumno -->
+                <div class="card p-6">
+                    <h3 class="font-bold mb-4">Progreso de mi hijo/a</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-bgLight rounded-xl">
+                            <span>Libros leídos este mes</span>
+                            <span class="font-bold text-primary text-xl">4</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-bgLight rounded-xl">
+                            <span>Nivel de comprensión</span>
+                            <span class="font-bold text-accent">Nivel 5 (Medio)</span>
+                        </div>
+                        <h4 class="font-bold mt-4">Últimas lecturas:</h4>
+                        <ul id="reading-history" class="text-sm space-y-1">
+                            <!-- Cargado por JS -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Restricciones de Familia -->
+                <div class="card p-6">
+                    <h3 class="font-bold mb-4">Preferencias y Restricciones</h3>
+                    <p class="text-sm mb-4">Alinea las recomendaciones con los valores familiares.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium">Bloquear géneros:</label>
+                            <input type="text" id="family-res-input" placeholder="Ej: Terror, Videojuegos..." class="w-full border p-2 rounded mt-1">
+                        </div>
+                        <button onclick="addFamilyRestriction()" class="w-full bg-secondary text-textDark py-2 rounded-xl font-bold">Guardar Cambios</button>
+                        
+                        <div class="mt-6 border-t pt-4">
+                            <h4 class="font-bold mb-2">Filtros de Familia:</h4>
+                            <div id="active-filters-fam" class="flex flex-wrap gap-2">
+                                <!-- Cargado por JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                
+            </div>
+            <!-- Parte del recomendador -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Chat con el Asistente -->
+                <div class="md:col-span-2 card p-4 flex flex-col h-[500px]">
+                    <h3 class="font-bold border-b pb-2 mb-4">Chat con sImbA</h3>
+                    <div id="familiar-chat-messages" class="flex-1 overflow-y-auto space-y-4 p-2">
+                        <div class="chat-bubble-ai p-3 max-w-[80%]">
+                            ¡Hola! Soy sImbA. Puedo sugerirte lecturas para tu hijo/a basadas en su progreso o ayudarte a configurar filtros. ¿Qué necesitas saber?
+                        </div>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                        <input type="text" id="familiar-chat-input" placeholder="Escribe aquí..." class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-primary outline-none">
+                        <button onclick="sendMessage()" class="bg-primary text-white p-2 rounded-xl">Enviar</button>
+                        <button onclick="simulateVoice()" class="bg-accent text-white p-2 rounded-xl" title="Usar Voz">🎤</button>
+                    </div>
+                </div>
+
+                <!-- Preferencias y Filtros Avanzados -->
+                <div class="space-y-6">
+                    <div class="card p-6">
+                        <h3 class="font-bold mb-4">Mis Preferencias 🪄</h3>
+                        <div class="space-y-4 text-left">
+                            
+                            <!-- Etiquetas -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Etiquetas</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="familiar-select-etiquetas" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Piratas">Piratas</option>
+                                        <option value="Aventuras">Aventuras</option>
+                                        <option value="Acción">Acción</option>
+                                        <option value="Comic">Comic</option>
+                                        <option value="Animales">Animales</option>
+                                        <option value="Misterio">Misterio</option>
+                                        <option value="Fantasía">Fantasía</option>
+                                    </select>
+                                    <button onclick="addPrefItem('etiquetas')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="familiar-list-etiquetas" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <!-- Estructura de personajes -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider whitespace-normal">Estructura de Personajes</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="familiar-select-estructura" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Héroe solitario">Héroe solitario</option>
+                                        <option value="Grupo de amigos">Grupo de amigos</option>
+                                        <option value="Animales antropomorfos">Animales antropomorfos</option>
+                                        <option value="Mentores mágicos">Mentores mágicos</option>
+                                    </select>
+                                    <button onclick="addPrefItem('estructura')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="familiar-list-estructura" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <!-- Valores -->
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Valores</label>
+                                <div class="mt-1 space-y-2">
+                                    <select id="familiar-select-valores" class="w-full border rounded-xl p-2 text-sm bg-white focus:border-primary outline-none">
+                                        <option value="">Selecciona...</option>
+                                        <option value="Amistad">Amistad</option>
+                                        <option value="Valentía">Valentía</option>
+                                        <option value="Respeto">Respeto</option>
+                                        <option value="Sinceridad">Sinceridad</option>
+                                        <option value="Esfuerzo">Esfuerzo</option>
+                                    </select>
+                                    <button onclick="addPrefItem('valores')" class="w-full bg-accent text-white py-2 rounded-xl font-bold">+</button>
+                                </div>
+                                <div id="familiar-list-valores" class="flex flex-wrap gap-2 mt-2"></div>
+                            </div>
+
+                            <button type="button" onclick="updatePreferences()" class="w-full bg-primary text-white py-3 rounded-xl font-bold shadow-md hover:bg-primary-hover transition-colors mt-4 uppercase text-xs">
+                                Actualizar Recomendaciones
+                            </button>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- Catálogo de Recomendaciones -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold">Libros sugeridos para tu hijo</h3>
+                <div id="familiar-book-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    <!-- Los libros se cargarán aquí -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center p-8 text-text-muted text-sm">
+        <p>© 2026 AxiomaTech - Proyecto sImbA</p>
+        <p class="mt-1">Prototipo para Leeón</p>
+    </footer>
+
+    <!-- JavaScript del Proyecto -->
+    <script src="app.js"></script>
+</body>
+</html>

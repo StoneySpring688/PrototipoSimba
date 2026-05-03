@@ -1,0 +1,57 @@
+:root {
+    /* Paleta de colores inspirada en sImbA / LEEÓN */
+    --primary-color: #f39200; /* Naranja */
+    --primary-hover: #d88100;
+    --secondary-color: #ffcc00; /* Amarillo */
+    --bg-light: #fff9e6; /* Crema claro */
+    --text-dark: #332211;
+    --text-muted: #665544;
+    --white: #ffffff;
+    --accent-blue: #00a9e0;
+    --error-red: #e53e3e;
+    --success-green: #38a169;
+}
+
+body {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Utilidades personalizadas para usar con Tailwind */
+.bg-primary { background-color: var(--primary-color); }
+.text-primary { color: var(--primary-color); }
+.border-primary { border-color: var(--primary-color); }
+
+.bg-secondary { background-color: var(--secondary-color); }
+.text-secondary { color: var(--secondary-color); }
+
+.bg-accent { background-color: var(--accent-blue); }
+
+/* Accesibilidad infantil: Botones grandes y legibles */
+button, .btn {
+    font-weight: bold;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.card {
+    background-color: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.chat-bubble-ai {
+    background-color: var(--secondary-color);
+    border-radius: 20px 20px 20px 5px;
+}
+
+.chat-bubble-user {
+    background-color: var(--accent-blue);
+    color: white;
+    border-radius: 20px 20px 5px 20px;
+}
